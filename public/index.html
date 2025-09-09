@@ -643,10 +643,49 @@ Recuerda: tu misión es empoderar a los estudiantes con herramientas y conocimie
     // Verificar estado de autenticación
     function checkAuthStatus() {
       const savedUser = localStorage.getItem('edubot_user');
-      if (savedUser) {
+      const savedToken = localStorage.getItem('edubot_token');
+      if (savedUser && savedToken) {
         appState.user = JSON.parse(savedUser);
         showMainApp();
         loadUserProgress();
+      }
+    }
+
+    // Cargar progreso del usuario desde la API
+    async function loadUserProgress() {
+      if (!appState.user || appState.user.id === 'guest') {
+        initializeNewUser();
+        return;
+      }
+
+      const token = localStorage.getItem('edubot_token');
+      if (!token) {
+        logout();
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/user', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          appState.user = data.user;
+          appState.userStats = data.user.stats;
+          updateStatsDisplay();
+          updateUserProfile();
+        } else {
+          // Token inválido o expirado
+          logout();
+        }
+      } catch (error) {
+        console.error('Error al cargar progreso del usuario:', error);
+        initializeNewUser();
       }
     }
 
@@ -671,28 +710,32 @@ Recuerda: tu misión es empoderar a los estudiantes con herramientas y conocimie
         return;
       }
 
-      // 👉 Aquí se conecta al backend en Vercel
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
 
-      const data = await res.json();
-      if (res.ok) {
-        // Guardar token y usuario en localStorage
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        appState.user = data.user;
-        showMainApp();
-      } else {
-        alert("❌ " + data.error);
+        const data = await res.json();
+        
+        if (res.ok) {
+          // Guardar token y datos de usuario
+          localStorage.setItem("edubot_token", data.token);
+          localStorage.setItem("edubot_user", JSON.stringify(data.user));
+          
+          appState.user = data.user;
+          showMainApp();
+          loadUserProgress();
+        } else {
+          alert("Error: " + data.error);
+        }
+      } catch (error) {
+        alert("Error de conexión. Intenta nuevamente.");
       }
     }
 
 
-    // Registrarse  
     async function register() {
       const name = document.getElementById('regName').value;
       const email = document.getElementById('regEmail').value;
@@ -707,20 +750,28 @@ Recuerda: tu misión es empoderar a los estudiantes con herramientas y conocimie
         alert("Las contraseñas no coinciden");
         return;
       }
+      if (password.length < 6) {
+        alert("La contraseña debe tener al menos 6 caracteres");
+        return;
+      }
 
-      // 👉 Aquí se conecta al backend en Vercel
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password })
-      });
+      try {
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password })
+        });
 
-      const data = await res.json();
-      if (res.ok) {
-        alert("✅ Registro exitoso, ahora inicia sesión");
-        showLoginForm();
-      } else {
-        alert("❌ " + data.error);
+        const data = await res.json();
+        
+        if (res.ok) {
+          alert("Registro exitoso. Ahora puedes iniciar sesión.");
+          showLoginForm();
+        } else {
+          alert("Error: " + data.error);
+        }
+      } catch (error) {
+        alert("Error de conexión. Intenta nuevamente.");
       }
     }
 
@@ -742,6 +793,7 @@ Recuerda: tu misión es empoderar a los estudiantes con herramientas y conocimie
     function logout() {
       appState.user = null;
       localStorage.removeItem('edubot_user');
+      localStorage.removeItem('edubot_token');
       document.getElementById('mainApp').style.display = 'none';
       document.getElementById('loginScreen').style.display = 'block';
     }
