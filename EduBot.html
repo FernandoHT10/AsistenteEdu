@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduBot - Tu Tutor Personalizado</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {margin:0;padding:0;box-sizing:border-box;}
+    body {font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;color:#333;}
+    .container {max-width:1200px;margin:0 auto;padding:20px;}
+    .header {text-align:center;color:white;margin-bottom:30px;}
+    .header h1 {font-size:2.5em;margin-bottom:10px;}
+    .header p {font-size:1.2em;opacity:.9;}
+    .main-card {background:white;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,.1);overflow:hidden;margin-bottom:20px;}
+    .tabs {display:flex;background:#f8f9fa;border-bottom:1px solid #dee2e6;}
+    .tab {padding:15px 25px;cursor:pointer;border:none;background:none;font-size:16px;color:#6c757d;transition:.3s;flex:1;text-align:center;position:relative;}
+    .tab.active {background:linear-gradient(45deg,#667eea,#764ba2);color:white;}
+    .tab .notification {position:absolute;top:5px;right:5px;background:#dc3545;color:white;border-radius:50%;width:18px;height:18px;font-size:12px;display:flex;align-items:center;justify-content:center;display:none;}
+    .tab-content {padding:30px;display:none;}
+    .tab-content.active {display:block;}
+    .upload-area {border:3px dashed #667eea;border-radius:15px;padding:40px;text-align:center;margin-bottom:20px;transition:.3s;cursor:pointer;}
+    .upload-area:hover {border-color:#764ba2;background:#f8f9ff;}
+    .file-input {display:none;}
+    .file-list {margin:15px 0;}
+    .file-item {display:flex;align-items:center;justify-content:space-between;background:#f8f9fa;padding:10px 15px;border-radius:8px;margin-bottom:8px;}
+    .file-item .file-name {display:flex;align-items:center;gap:10px;}
+    .file-item .file-actions {display:flex;gap:5px;}
+    .file-item .file-actions button {background:none;border:none;cursor:pointer;color:#6c757d;font-size:16px;}
+    .file-item .file-actions button:hover {color:#dc3545;}
+    .btn {background:linear-gradient(45deg,#667eea,#764ba2);color:white;border:none;padding:12px 30px;border-radius:25px;font-size:16px;cursor:pointer;transition:.3s;margin:5px;display:inline-flex;align-items:center;gap:8px;}
+    .btn:hover {transform:translateY(-2px);box-shadow:0 5px 15px rgba(0,0,0,.2);}
+    .btn:disabled {opacity:.5;cursor:not-allowed;}
+    .btn-outline {background:transparent;border:2px solid #667eea;color:#667eea;}
+    .btn-outline:hover {background:#667eea;color:white;}
+    .btn-success {background:linear-gradient(45deg,#28a745,#20c997);}
+    .btn-warning {background:linear-gradient(45deg,#ffc107,#fd7e14);}
+    .btn-danger {background:linear-gradient(45deg,#dc3545,#c82333);}
+    .btn-info {background:linear-gradient(45deg,#17a2b8,#138496);}
+    .chat-area {background:#f8f9fa;border-radius:15px;height:400px;padding:20px;overflow-y:auto;margin-bottom:20px;border:1px solid #dee2e6;display:flex;flex-direction:column;}
+    .message {margin-bottom:15px;padding:12px 18px;border-radius:18px;max-width:80%;animation:slideIn .3s;position:relative;}
+    .message.user {background:linear-gradient(45deg,#667eea,#764ba2);color:white;margin-left:auto;}
+    .message.bot {background:white;border:1px solid #dee2e6;margin-right:auto;}
+    .message .time {font-size:0.7em;opacity:0.7;margin-top:5px;display:block;}
+    .chat-input {display:flex;gap:10px;margin-top:auto;}
+    .chat-input input {flex:1;padding:12px 18px;border:1px solid #dee2e6;border-radius:25px;font-size:16px;outline:none;}
+    .chat-input input:focus {border-color:#667eea;}
+    .progress-bar {background:#e9ecef;border-radius:10px;height:20px;margin:20px 0;overflow:hidden;position:relative;}
+    .progress-fill {background:linear-gradient(90deg,#667eea,#764ba2);height:100%;width:0%;transition:width .3s;border-radius:10px;}
+    .progress-text {position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;color:#333;font-size:12px;font-weight:bold;}
+    .study-plan {display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin:20px 0;}
+    .study-card {background:white;border-radius:15px;padding:20px;box-shadow:0 5px 15px rgba(0,0,0,.1);border-left:5px solid #667eea;transition:.3s;position:relative;}
+    .study-card:hover {transform:translateY(-5px);}
+    .study-card h3 {color:#667eea;margin-bottom:10px;}
+    .study-card .badge {position:absolute;top:15px;right:15px;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:bold;}
+    .study-card .badge-completed {background:#d4edda;color:#155724;}
+    .study-card .badge-pending {background:#fff3cd;color:#856404;}
+    .study-card .badge-active {background:#cce5ff;color:#004085;}
+    .study-card .progress {height:5px;background:#e9ecef;border-radius:5px;margin:15px 0;overflow:hidden;}
+    .study-card .progress-inner {height:100%;background:linear-gradient(90deg,#667eea,#764ba2);width:0%;transition:width .3s;}
+    .quiz-question {background:#f8f9fa;padding:20px;border-radius:15px;margin:15px 0;border:1px solid #dee2e6;}
+    .quiz-options {display:grid;gap:10px;margin:15px 0;}
+    .quiz-option {padding:12px;border:2px solid #dee2e6;border-radius:10px;cursor:pointer;transition:.3s;display:flex;align-items:center;gap:10px;}
+    .quiz-option:hover {border-color:#667eea;background:#f8f9ff;}
+    .quiz-option.correct {border-color:#28a745;background:#d4edda;}
+    .quiz-option.incorrect {border-color:#dc3545;background:#f8d7da;}
+    .quiz-option input[type="radio"] {width:18px;height:18px;}
+    .summary-section,.exercise-section,.exam-section {border-radius:15px;padding:25px;margin:20px 0;}
+    .summary-section {background:#f8f9fa;border-left:5px solid #28a745;}
+    .exercise-section {background:#fff3cd;border-left:5px solid #ffc107;}
+    .exam-section {background:#f8d7da;border-left:5px solid #dc3545;}
+    .score-display {text-align:center;font-size:2em;padding:30px;background:linear-gradient(45deg,#28a745,#20c997);color:white;border-radius:15px;margin:20px 0;}
+    .stats-container {display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin:20px 0;}
+    .stat-card {background:white;border-radius:15px;padding:20px;text-align:center;box-shadow:0 5px 15px rgba(0,0,0,.1);}
+    .stat-card i {font-size:2em;margin-bottom:10px;color:#667eea;}
+    .stat-card .value {font-size:1.8em;font-weight:bold;margin:5px 0;}
+    .stat-card .label {color:#6c757d;}
+    .modal {display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;}
+    .modal-content {background:white;border-radius:15px;padding:30px;max-width:500px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.2);}
+    .modal-header {display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+    .modal-header h2 {margin:0;}
+    .modal-header .close {background:none;border:none;font-size:1.5em;cursor:pointer;}
+    .modal-body {margin-bottom:20px;}
+    .modal-footer {display:flex;justify-content:flex-end;gap:10px;}
+    .loading {display:inline-block;width:20px;height:20px;border:3px solid rgba(255,255,255,.3);border-radius:50%;border-top-color:white;animation:spin 1s ease-in-out infinite;}
+    .xp-badge {display:inline-flex;align-items:center;gap:5px;background:linear-gradient(45deg,#ff6b6b,#ff9e7d);color:white;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:bold;}
+    .level-display {display:inline-flex;align-items:center;gap:5px;background:linear-gradient(45deg,#48dbfb,#0abde3);color:white;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:bold;}
+    .login-container {max-width:400px;margin:50px auto;background:white;border-radius:15px;padding:30px;box-shadow:0 20px 40px rgba(0,0,0,.1);}
+    .login-container h2 {text-align:center;margin-bottom:20px;color:#667eea;}
+    .form-group {margin-bottom:20px;}
+    .form-group label {display:block;margin-bottom:5px;font-weight:bold;}
+    .form-group input {width:100%;padding:12px;border:1px solid #dee2e6;border-radius:8px;font-size:16px;}
+    .form-group input:focus {border-color:#667eea;outline:none;}
+    .admin-panel {background:#f8f9fa;border-radius:15px;padding:20px;margin:20px 0;}
+    .admin-panel h3 {color:#667eea;margin-bottom:15px;}
+    .admin-stats {display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-bottom:20px;}
+    .admin-stat {background:white;border-radius:10px;padding:15px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.1);}
+    .admin-table {width:100%;border-collapse:collapse;margin:15px 0;background:white;border-radius:10px;overflow:hidden;}
+    .admin-table th, .admin-table td {padding:12px;text-align:left;border-bottom:1px solid #dee2e6;}
+    .admin-table th {background:#667eea;color:white;}
+    .admin-table tr:hover {background:#f8f9ff;}
+    .placeholder-text {text-align:center;padding:30px;color:#6c757d;font-style:italic;}
+    @keyframes spin {to{transform:rotate(360deg);}}
+    @keyframes slideIn {from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+    @media (max-width:768px) {
+      .tabs {flex-direction:column;}
+      .tab {padding:10px;}
+      .message {max-width:90%;}
+      .stats-container {grid-template-columns:1fr;}
+      .study-plan {grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="appContainer">
+    <!-- Pantalla de login/registro -->
+    <div class="login-container" id="loginScreen">
+      <h2><i class="fas fa-graduation-cap"></i> EDUBOT</h2>
+      <p style="text-align: center; margin-bottom: 20px;">Tu tutor personalizado de inteligencia artificial</p>
+      
+      <div id="loginForm">
+        <div class="form-group">
+          <label for="email">Correo electrónico</label>
+          <input type="email" id="email" placeholder="tu@email.com">
+        </div>
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" placeholder="••••••••">
+        </div>
+        <button class="btn" style="width: 100%;" onclick="login()">
+          <i class="fas fa-sign-in-alt"></i> Iniciar sesión
+        </button>
+        <p style="text-align: center; margin-top: 15px;">
+          ¿No tienes cuenta? <a href="#" onclick="showRegisterForm()" style="color: #667eea;">Regístrate aquí</a>
+        </p>
+        <div style="text-align: center; margin-top: 20px;">
+          <button class="btn btn-outline" onclick="continueAsGuest()">
+            <i class="fas fa-user"></i> Continuar como invitado
+          </button>
+        </div>
+      </div>
+      
+      <div id="registerForm" style="display: none;">
+        <div class="form-group">
+          <label for="regName">Nombre completo</label>
+          <input type="text" id="regName" placeholder="Juan Pérez">
+        </div>
+        <div class="form-group">
+          <label for="regEmail">Correo electrónico</label>
+          <input type="email" id="regEmail" placeholder="tu@email.com">
+        </div>
+        <div class="form-group">
+          <label for="regPassword">Contraseña</label>
+          <input type="password" id="regPassword" placeholder="Mínimo 8 caracteres">
+        </div>
+        <div class="form-group">
+          <label for="regConfirmPassword">Confirmar contraseña</label>
+          <input type="password" id="regConfirmPassword" placeholder="••••••••">
+        </div>
+        <button class="btn" style="width: 100%;" onclick="register()">
+          <i class="fas fa-user-plus"></i> Crear cuenta
+        </button>
+        <p style="text-align: center; margin-top: 15px;">
+          ¿Ya tienes cuenta? <a href="#" onclick="showLoginForm()" style="color: #667eea;">Inicia sesión aquí</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Aplicación principal (oculta inicialmente) -->
+    <div id="mainApp" style="display: none;">
+      <div class="header">
+        <h1>🤖 EDUBOT</h1>
+        <p>Tu Tutor Personalizado de IA</p>
+        <div style="margin-top: 10px;">
+          <span class="level-display" id="userLevel">Nivel 1</span>
+          <span class="xp-badge" id="userXP">100 XP</span>
+          <button class="btn btn-outline" style="margin-left: 10px; padding: 5px 10px;" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+          </button>
+          <button class="btn btn-info" style="margin-left: 10px; padding: 5px 10px;" onclick="switchTab('admin')" id="adminBtn" style="display: none;">
+            <i class="fas fa-cog"></i> Admin
+          </button>
+        </div>
+      </div>
+
+      <div class="main-card">
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('upload')">
+            <i class="fas fa-file-upload"></i> Subir Material
+            <span class="notification" id="uploadNotification">1</span>
+          </button>
+          <button class="tab" onclick="switchTab('chat')">
+            <i class="fas fa-comments"></i> Chat Tutor
+            <span class="notification" id="chatNotification">3</span>
+          </button>
+          <button class="tab" onclick="switchTab('study')">
+            <i class="fas fa-book"></i> Plan de Estudio
+            <span class="notification" id="studyNotification">2</span>
+          </button>
+          <button class="tab" onclick="switchTab('exam')">
+            <i class="fas fa-graduation-cap"></i> Examen
+            <span class="notification" id="examNotification">5</span>
+          </button>
+          <button class="tab" onclick="switchTab('stats')">
+            <i class="fas fa-chart-line"></i> Progreso
+          </button>
+          <button class="tab" onclick="switchTab('admin')" id="adminTab" style="display: none;">
+            <i class="fas fa-cog"></i> Admin
+          </button>
+        </div>
+
+        <!-- Upload -->
+        <div class="tab-content active" id="upload">
+          <h2><i class="fas fa-file-upload"></i> Sube tu material de estudio</h2>
+          <p>Selecciona documentos, imágenes o textos para que EduBot los analice y cree tu plan de estudio personalizado.</p>
+          
+          <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon"><i class="fas fa-cloud-upload-alt fa-3x"></i></div>
+            <h3>Arrastra archivos aquí o haz clic para seleccionar</h3>
+            <p>Soporta: PDF, DOCX, imágenes (JPG, PNG), texto (TXT) - Máx. 10MB por archivo</p>
+            <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.docx,.jpg,.jpeg,.png,.txt">
+          </div>
+          
+          <div class="file-list" id="fileList"></div>
+          
+          <div style="text-align: center; margin: 20px 0;">
+            <button class="btn" onclick="processFiles()" id="processBtn" disabled>
+              <i class="fas fa-cogs"></i> Procesar Archivos
+            </button>
+            <button class="btn btn-outline" onclick="clearFiles()">
+              <i class="fas fa-trash"></i> Limpiar
+            </button>
+          </div>
+          
+          <div class="progress-bar" id="progressContainer" style="display:none;">
+            <div class="progress-fill" id="progressFill"></div>
+            <div class="progress-text" id="progressText">0%</div>
+          </div>
+          
+          <div id="processingResults" style="display: none;">
+            <div class="summary-section">
+              <h3><i class="fas fa-file-alt"></i> Resumen generado</h3>
+              <div id="summaryContent"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat -->
+        <div class="tab-content" id="chat">
+          <h2><i class="fas fa-comments"></i> Habla con tu tutor</h2>
+          <p>Pregunta cualquier duda sobre el material que has subido. EduBot te ayudará a entender los conceptos.</p>
+          
+          <div class="chat-area" id="chatArea">
+            <div class="message bot">
+              ¡Hola! Soy EduBot, tu tutor personal. Estoy aquí para ayudarte con cualquier materia académica. Una vez que subas tu material, podré ayudarte a entenderlo mejor. ¿En qué tema necesitas ayuda hoy?
+              <span class="time">12:05 PM</span>
+            </div>
+          </div>
+          
+          <div class="chat-input">
+            <input type="text" id="chatInput" placeholder="Escribe tu pregunta aquí..." onkeypress="handleChatEnter(event)">
+            <button class="btn" onclick="sendMessage()" id="sendMessageBtn">
+              <i class="fas fa-paper-plane"></i> Enviar
+            </button>
+          </div>
+          
+          <div style="margin-top: 20px; text-align: center;">
+            <button class="btn btn-outline" onclick="suggestQuestion('explicame')">
+              <i class="fas fa-lightbulb"></i> Explicar concepto
+            </button>
+            <button class="btn btn-outline" onclick="suggestQuestion('ejemplo')">
+              <i class="fas fa-list-alt"></i> Pedir ejemplo
+            </button>
+            <button class="btn btn-outline" onclick="suggestQuestion('resumen')">
+              <i class="fas fa-file-alt"></i> Hacer resumen
+            </button>
+            <button class="btn btn-outline" onclick="clearChat()">
+              <i class="fas fa-broom"></i> Limpiar chat
+            </button>
+          </div>
+        </div>
+
+        <!-- Study -->
+        <div class="tab-content" id="study">
+          <h2><i class="fas fa-book"></i> Tu plan de estudio personalizado</h2>
+          <p>EduBot ha creado un plan de estudio adaptado a tu material y nivel. Completa las fases para dominar el tema.</p>
+          
+          <div class="stats-container">
+            <div class="stat-card">
+              <i class="fas fa-check-circle"></i>
+              <div class="value" id="completedPhases">0/5</div>
+              <div class="label">Fases completadas</div>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-clock"></i>
+              <div class="value" id="estimatedTime">3h 30m</div>
+              <div class="label">Tiempo estimado</div>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-trophy"></i>
+              <div class="value" id="currentLevel">Principiante</div>
+              <div class="label">Nivel actual</div>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-star"></i>
+              <div class="value" id="studyXP">0 XP</div>
+              <div class="label">XP Ganados</div>
+            </div>
+          </div>
+          
+          <div id="studyContent">
+            <p class="placeholder-text">Primero sube tu material para generar un plan de estudio personalizado.</p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <button class="btn btn-success" onclick="startStudyPlan()" id="startStudyBtn" disabled>
+              <i class="fas fa-play"></i> Comenzar plan de estudio
+            </button>
+            <button class="btn btn-outline" onclick="generateStudyPlan()" id="regenerateStudyBtn" style="display: none;">
+              <i class="fas fa-sync"></i> Regenerar plan
+            </button>
+          </div>
+        </div>
+
+        <!-- Exam -->
+        <div class="tab-content" id="exam">
+          <h2><i class="fas fa-graduation-cap"></i> Examen de evaluación</h2>
+          <p>Pon a prueba tus conocimientos con este examen generado a partir de tu material de estudio.</p>
+          
+          <div id="examContent">
+            <div class="placeholder-text">
+              <p>Completa tu plan de estudio para acceder al examen final.</p>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; display: none;" id="examActions">
+            <button class="btn btn-warning" onclick="startExam()">
+              <i class="fas fa-play"></i> Comenzar examen
+            </button>
+            <button class="btn btn-outline" onclick="generateMoreQuestions()">
+              <i class="fas fa-sync"></i> Generar más preguntas
+            </button>
+          </div>
+
+          <div id="examResults" style="display: none;">
+            <div class="score-display">
+              <div id="examScore">0%</div>
+              <p>Puntuación obtenida</p>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+              <button class="btn btn-success" onclick="reviewExam()">
+                <i class="fas fa-search"></i> Revisar respuestas
+              </button>
+              <button class="btn btn-outline" onclick="retryExam()">
+                <i class="fas fa-redo"></i> Intentar nuevamente
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="tab-content" id="stats">
+          <h2><i class="fas fa-chart-line"></i> Tu progreso de aprendizaje</h2>
+          <p>Revisa tus estadísticas y logros en tu camino de aprendizaje con EduBot.</p>
+          
+          <div class="stats-container">
+            <div class="stat-card">
+              <i class="fas fa-book"></i>
+              <div class="value" id="totalMaterials">0</div>
+              <div class="label">Materiales subidos</div>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-comment"></i>
+              <div class="value" id="totalQuestions">0</div>
+              <div class="label">Preguntas realizadas</div>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-check-square"></i>
+              <div class="value" id="totalExercises">0</div>
+              <div class="label">Ejercicios completados</div>
+            </div>
+            <div class="stat-card">
+              <i class="fas fa-star"></i>
+              <div class="value" id="totalScore">0</div>
+              <div class="label">Puntuación promedio</div>
+            </div>
+          </div>
+          
+          <div class="progress-bar" style="height: 30px; margin: 30px 0;">
+            <div class="progress-fill" id="levelProgressFill" style="width: 35%;"></div>
+            <div class="progress-text" id="levelProgressText">Nivel 3 - 35% completado</div>
+          </div>
+          
+          <div style="background: white; border-radius: 15px; padding: 20px; margin: 20px 0;">
+            <h3><i class="fas fa-trophy"></i> Logros desbloqueados</h3>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 15px;" id="achievementsContainer">
+              <div style="background: #f8f9fa; padding: 10px; border-radius: 10px; text-align: center; width: 100px;">
+                <i class="fas fa-upload fa-2x" style="color: #667eea;"></i>
+                <div style="font-size: 12px; margin-top: 5px;">Primer material</div>
+              </div>
+              <div style="background: #f8f9fa; padding: 10px; border-radius: 10px; text-align: center; width: 100px;">
+                <i class="fas fa-comment fa-2x" style="color: #28a745;"></i>
+                <div style="font-size: 12px; margin-top: 5px;">Primera pregunta</div>
+              </div>
+              <div style="background: #fff3cd; padding: 10px; border-radius: 10px; text-align: center; width: 100px;">
+                <i class="fas fa-medal fa-2x" style="color: #ffc107;"></i>
+                <div style="font-size: 12px; margin-top: 5px;">Estudiante novato</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: white; border-radius: 15px; padding: 20px; margin: 20px 0;">
+            <h3><i class="fas fa-history"></i> Historial de estudio</h3>
+            <div id="studyHistory" style="margin-top: 15px;">
+              <p class="placeholder-text">Aún no hay historial de estudio.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Panel -->
+        <div class="tab-content" id="admin">
+          <h2><i class="fas fa-cog"></i> Panel de Administración</h2>
+          <p>Gestiona usuarios, contenidos y configuración de la plataforma.</p>
+          
+          <div class="admin-panel">
+            <h3><i class="fas fa-chart-bar"></i> Estadísticas generales</h3>
+            <div class="admin-stats">
+              <div class="admin-stat">
+                <div class="value">152</div>
+                <div class="label">Usuarios registrados</div>
+              </div>
+              <div class="admin-stat">
+                <div class="value">387</div>
+                <div class="label">Documentos procesados</div>
+              </div>
+              <div class="admin-stat">
+                <div class="value">1,248</div>
+                <div class="label">Preguntas respondidas</div>
+              </div>
+              <div class="admin-stat">
+                <div class="value">84%</div>
+                <div class="label">Satisfacción</div>
+              </div>
+            </div>
+            
+            <h3><i class="fas fa-users"></i> Usuarios recientes</h3>
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Registro</th>
+                  <th>Nivel</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>María González</td>
+                  <td>maria@ejemplo.com</td>
+                  <td>2023-10-15</td>
+                  <td>5</td>
+                  <td>
+                    <button class="btn btn-outline" style="padding: 3px 8px; font-size: 12px;">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Carlos López</td>
+                  <td>carlos@ejemplo.com</td>
+                  <td>2023-10-14</td>
+                  <td>3</td>
+                  <td>
+                    <button class="btn btn-outline" style="padding: 3px 8px; font-size: 12px;">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Ana Martínez</td>
+                  <td>ana@ejemplo.com</td>
+                  <td>2023-10-13</td>
+                  <td>7</td>
+                  <td>
+                    <button class="btn btn-outline" style="padding: 3px 8px; font-size: 12px;">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <h3><i class="fas fa-tools"></i> Configuración del sistema</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+              <div>
+                <div class="form-group">
+                  <label for="apiKey">API Key de Gemini</label>
+                  <input type="password" id="apiKey" value="AIzaSyBe2aO2d5SGnDyF24NOpQAW19MeaI3QfEk">
+                </div>
+                <div class="form-group">
+                  <label for="maxFileSize">Tamaño máximo de archivo (MB)</label>
+                  <input type="number" id="maxFileSize" value="10">
+                </div>
+              </div>
+              <div>
+                <div class="form-group">
+                  <label for="defaultLanguage">Idioma por defecto</label>
+                  <select id="defaultLanguage" class="form-control">
+                    <option value="es">Español</option>
+                    <option value="en">English</option>
+                    <option value="pt">Português</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="autoSave">Guardado automático</label>
+                  <input type="checkbox" id="autoSave" checked>
+                </div>
+              </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+              <button class="btn btn-success">
+                <i class="fas fa-save"></i> Guardar configuración
+              </button>
+              <button class="btn btn-outline">
+                <i class="fas fa-sync"></i> Restablecer
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para preguntas frecuentes -->
+  <div class="modal" id="helpModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2><i class="fas fa-question-circle"></i> Ayuda</h2>
+        <button class="close" onclick="closeModal('helpModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h3>¿Cómo usar EduBot?</h3>
+        <p>1. Sube tus materiales de estudio (PDF, DOCX, imágenes o texto)</p>
+        <p>2. Espera a que EduBot procese y analice el contenido</p>
+        <p>3. Revisa el plan de estudio personalizado generado</p>
+        <p>4. Chatea con el tutor para resolver dudas</p>
+        <p>5. Realiza ejercicios y el examen final para evaluar tu conocimiento</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('helpModal')">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // API Key (en un entorno real, esto estaría en el backend)
+    const GEMINI_API_KEY = "AIzaSyBe2aO2d5SGnDyF24NOpQAW19MeaI3QfEk";
+    
+    // System Prompt para el asistente educativo
+    const SYSTEM_PROMPT = `Eres "EduBot", un tutor educativo especializado en todas las áreas académicas. Tu propósito es asistir a estudiantes de todos los niveles con sus necesidades educativas.
+
+DIRECTIVAS PRINCIPALES:
+1. IDENTIDAD Y TONO:
+   - Eres un profesor paciente, alentador y conocedor
+   - Mantienes un tono profesional pero accesible
+   - Usas un lenguaje apropiado para el nivel educativo del estudiante
+   - Eres inclusivo y apoyas diversos estilos de aprendizaje
+
+2. ÁMBITO EDUCATIVO:
+   - Limítate exclusivamente a temas académicos y educativos
+   - Cubre todas las materias: matemáticas, ciencias, lenguaje, historia, artes, etc.
+   - Proporciona explicaciones claras y ejemplos relevantes
+   - Sugiere métodos de estudio y técnicas de aprendizaje
+
+3. PROHIBICIONES:
+   - No respondas preguntas no educativas o personales
+   - No des opiniones sobre temas controvertidos o políticos
+   - No proporciones respuestas directas a exámenes o tareas, sino guía
+   - No recomiendes contenido no educativo
+
+4. ENFOQUE PEDAGÓGICO:
+   - Fomenta el aprendizaje activo y el pensamiento crítico
+   - Haz preguntas socráticas para guiar hacia las respuestas
+   - Reconoce y elogia el esfuerzo, no solo el resultado
+   - Adapta tus explicaciones al nivel del estudiante
+
+5. ESTRUCTURA DE RESPUESTAS:
+   - Comienza con un saludo educativo apropiado
+   - Divide conceptos complejos en partes manejables
+   - Proporciona ejemplos relevantes y analogías
+   - Finaliza con una pregunta para verificar comprensión
+
+Recuerda: tu misión es empoderar a los estudiantes con herramientas y conocimientos, no hacer su trabajo por ellos.`;
+
+    // Estado de la aplicación
+    let appState = {
+      user: null,
+      isAdmin: false,
+      files: [],
+      currentTopic: null,
+      studyPlan: null,
+      examQuestions: [],
+      userStats: {
+        materialsUploaded: 0,
+        questionsAsked: 0,
+        exercisesCompleted: 0,
+        averageScore: 0,
+        studyTime: 0,
+        currentLevel: 1,
+        xp: 0,
+        achievements: []
+      },
+      chatHistory: []
+    };
+
+    // Niveles y sistema de XP
+    const LEVELS = [
+      { level: 1, xpRequired: 0, title: "Principiante" },
+      { level: 2, xpRequired: 100, title: "Aprendiz" },
+      { level: 3, xpRequired: 300, title: "Estudiante" },
+      { level: 4, xpRequired: 600, title: "Avanzado" },
+      { level: 5, xpRequired: 1000, title: "Experto" },
+      { level: 6, xpRequired: 1500, title: "Maestro" }
+    ];
+
+    // Logros disponibles
+    const ACHIEVEMENTS = [
+      { id: "first_upload", name: "Primer material", icon: "upload", description: "Subiste tu primer material de estudio", xp: 25 },
+      { id: "first_question", name: "Primera pregunta", icon: "comment", description: "Realizaste tu primera pregunta", xp: 15 },
+      { id: "study_plan", name: "Planificador", icon: "book", description: "Completaste un plan de estudio", xp: 50 },
+      { id: "exam_passed", name: "Examen aprobado", icon: "graduation-cap", description: "Aprobaste tu primer examen", xp: 75 },
+      { id: "consistent", name: "Estudiante constante", icon: "calendar", description: "Estudiaste 5 días seguidos", xp: 100 }
+    ];
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeDragAndDrop();
+      checkAuthStatus();
+    });
+
+    // Verificar estado de autenticación
+    function checkAuthStatus() {
+      const savedUser = localStorage.getItem('edubot_user');
+      if (savedUser) {
+        appState.user = JSON.parse(savedUser);
+        showMainApp();
+        loadUserProgress();
+      }
+    }
+
+    // Mostrar formulario de registro
+    function showRegisterForm() {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('registerForm').style.display = 'block';
+    }
+
+    // Mostrar formulario de login
+    function showLoginForm() {
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('loginForm').style.display = 'block';
+    }
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      if (!email || !password) {
+        alert("Completa todos los campos");
+        return;
+      }
+
+      // 👉 Aquí se conecta al backend en Vercel
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        // Guardar token y usuario en localStorage
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        appState.user = data.user;
+        showMainApp();
+      } else {
+        alert("❌ " + data.error);
+      }
+    }
+
+
+    // Registrarse  
+    async function register() {
+      const name = document.getElementById('regName').value;
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+      const confirmPassword = document.getElementById('regConfirmPassword').value;
+
+      if (!name || !email || !password || !confirmPassword) {
+        alert("Completa todos los campos");
+        return;
+      }
+      if (password !== confirmPassword) {
+        alert("Las contraseñas no coinciden");
+        return;
+      }
+
+      // 👉 Aquí se conecta al backend en Vercel
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert("✅ Registro exitoso, ahora inicia sesión");
+        showLoginForm();
+      } else {
+        alert("❌ " + data.error);
+      }
+    }
+
+
+    // Continuar como invitado
+    function continueAsGuest() {
+      appState.user = {
+        id: 'guest',
+        name: 'Invitado',
+        email: '',
+        isAdmin: false
+      };
+      
+      showMainApp();
+      initializeNewUser();
+    }
+
+    // Cerrar sesión
+    function logout() {
+      appState.user = null;
+      localStorage.removeItem('edubot_user');
+      document.getElementById('mainApp').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'block';
+    }
+
+    // Mostrar aplicación principal
+    function showMainApp() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      
+      // Mostrar u ocultar funciones de administrador
+      if (appState.user && appState.user.isAdmin) {
+        document.getElementById('adminBtn').style.display = 'inline-block';
+        document.getElementById('adminTab').style.display = 'flex';
+      }
+      
+      updateUserProfile();
+    }
+
+    // Inicializar nuevo usuario
+    function initializeNewUser() {
+      appState.userStats = {
+        materialsUploaded: 0,
+        questionsAsked: 0,
+        exercisesCompleted: 0,
+        averageScore: 0,
+        studyTime: 0,
+        currentLevel: 1,
+        xp: 0,
+        achievements: []
+      };
+      
+      updateStatsDisplay();
+    }
+
+    // Actualizar perfil de usuario
+    function updateUserProfile() {
+      if (!appState.user) return;
+      
+      document.getElementById('userLevel').textContent = `Nivel ${appState.userStats.currentLevel}`;
+      document.getElementById('userXP').textContent = `${appState.userStats.xp} XP`;
+    }
+
+    // Función para inicializar drag and drop
+    function initializeDragAndDrop() {
+      const dropZone = document.getElementById('dropZone');
+      
+      dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.style.borderColor = '#764ba2';
+        dropZone.style.background = '#f0f4ff';
+      });
+      
+      dropZone.addEventListener('dragleave', function() {
+        dropZone.style.borderColor = '#667eea';
+        dropZone.style.background = '';
+      });
+      
+      dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.style.borderColor = '#667eea';
+        dropZone.style.background = '';
+        
+        if (e.dataTransfer.files.length > 0) {
+          document.getElementById('fileInput').files = e.dataTransfer.files;
+          handleFileSelection(e.dataTransfer.files);
+        }
+      });
+    }
+
+    // Manejar selección de archivos
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      handleFileSelection(e.target.files);
+    });
+
+    function handleFileSelection(files) {
+      if (files.length > 0) {
+        // Validar tamaño de archivos (máx 10MB)
+        let validFiles = [];
+        for (let i = 0; i < files.length; i++) {
+          if (files[i].size <= 10 * 1024 * 1024) { // 10MB
+            validFiles.push(files[i]);
+          } else {
+            alert(`El archivo ${files[i].name} es demasiado grande. El tamaño máximo permitido es 10MB.`);
+          }
+        }
+        
+        if (validFiles.length > 0) {
+          appState.files = Array.from(validFiles);
+          document.getElementById('processBtn').disabled = false;
+          updateFileList();
+          
+          // Mostrar notificación
+          document.getElementById('uploadNotification').style.display = 'flex';
+        }
+      }
+    }
+
+    // Actualizar lista de archivos
+    function updateFileList() {
+      const fileList = document.getElementById('fileList');
+      fileList.innerHTML = '';
+      
+      appState.files.forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+          <div class="file-name">
+            <i class="fas fa-file"></i> ${file.name} (${formatFileSize(file.size)})
+          </div>
+          <div class="file-actions">
+            <button onclick="removeFile(${index})"><i class="fas fa-times"></i></button>
+          </div>
+        `;
+        fileList.appendChild(fileItem);
+      });
+    }
+
+    // Formatear tamaño de archivo
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' bytes';
+      else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      else return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    // Eliminar archivo
+    function removeFile(index) {
+      appState.files.splice(index, 1);
+      updateFileList();
+      document.getElementById('processBtn').disabled = appState.files.length === 0;
+      
+      if (appState.files.length === 0) {
+        document.getElementById('uploadNotification').style.display = 'none';
+      }
+    }
+
+    // Limpiar archivos
+    function clearFiles() {
+      appState.files = [];
+      updateFileList();
+      document.getElementById('processBtn').disabled = true;
+      document.getElementById('uploadNotification').style.display = 'none';
+      document.getElementById('processingResults').style.display = 'none';
+    }
+
+    // Procesar archivos
+    async function processFiles() {
+      document.getElementById('processBtn').disabled = true;
+      document.getElementById('progressContainer').style.display = 'block';
+      
+      // Simular progreso
+      simulateProgress(0, 100, 2000).then(async () => {
+        await generateLearningContent();
+        document.getElementById('processingResults').style.display = 'block';
+        document.getElementById('startStudyBtn').disabled = false;
+        
+        // Actualizar estadísticas
+        appState.userStats.materialsUploaded += appState.files.length;
+        
+        // Otorgar logro por primera subida
+        if (appState.userStats.materialsUploaded === 1) {
+          grantAchievement("first_upload");
+        }
+        
+        updateStatsDisplay();
+        
+        // Mostrar notificaciones en otras pestañas
+        document.getElementById('studyNotification').style.display = 'flex';
+        document.getElementById('examNotification').style.display = 'flex';
+      });
+    }
+
+    // Simular barra de progreso
+    function simulateProgress(start, end, duration) {
+      return new Promise(resolve => {
+        const range = end - start;
+        const increment = 1;
+        const stepTime = duration / range;
+        let current = start;
+        
+        const timer = setInterval(() => {
+          current += increment;
+          document.getElementById('progressFill').style.width = current + '%';
+          document.getElementById('progressText').textContent = current + '%';
+          
+          if (current >= end) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, stepTime);
+      });
+    }
+
+    // Generar contenido de aprendizaje
+    async function generateLearningContent() {
+      const fileNames = appState.files.map(f => f.name).join(", ");
+      const prompt = "Genera un resumen educativo, plan de estudio en 5 fases y 5 preguntas de examen sobre el material: " + fileNames;
+      
+      try {
+        const result = await callGemini(prompt);
+        
+        // Simular contenido generado (en un caso real, se parsearía la respuesta)
+        appState.currentTopic = "Tema: " + fileNames;
+        
+        // Actualizar el contenido de estudio
+        document.getElementById('studyContent').innerHTML = `
+          <div class="study-plan">
+            <div class="study-card">
+              <span class="badge badge-pending">Pendiente</span>
+              <h3>Fase 1: Introducción</h3>
+              <p>Familiarízate con los conceptos básicos del tema.</p>
+              <div class="progress">
+                <div class="progress-inner" style="width: 0%"></div>
+              </div>
+              <button class="btn btn-outline" style="margin-top: 10px;" onclick="startPhase(1)">Comenzar</button>
+            </div>
+            <div class="study-card">
+              <span class="badge badge-pending">Pendiente</span>
+              <h3>Fase 2: Comprensión</h3>
+              <p>Profundiza en los conceptos principales.</p>
+              <div class="progress">
+                <div class="progress-inner" style="width: 0%"></div>
+              </div>
+              <button class="btn btn-outline" style="margin-top: 10px; opacity: 0.5;" disabled>Comenzar</button>
+            </div>
+            <div class="study-card">
+              <span class="badge badge-pending">Pendiente</span>
+              <h3>Fase 3: Aplicación</h3>
+              <p>Aplica lo aprendido en ejercicios prácticos.</p>
+              <div class="progress">
+                <div class="progress-inner" style="width: 0%"></div>
+              </div>
+              <button class="btn btn-outline" style="margin-top: 10px; opacity: 0.5;" disabled>Comenzar</button>
+            </div>
+            <div class="study-card">
+              <span class="badge badge-pending">Pendiente</span>
+              <h3>Fase 4: Evaluación</h3>
+              <p>Evalúa tu conocimiento con un examen práctico.</p>
+              <div class="progress">
+                <div class="progress-inner" style="width: 0%"></div>
+              </div>
+              <button class="btn btn-outline" style="margin-top: 10px; opacity: 0.5;" disabled>Comenzar</button>
+            </div>
+            <div class="study-card">
+              <span class="badge badge-pending">Pendiente</span>
+              <h3>Fase 5: Maestría</h3>
+              <p>Convierte el conocimiento en maestría con retos avanzados.</p>
+              <div class="progress">
+                <div class="progress-inner" style="width: 0%"></div>
+              </div>
+              <button class="btn btn-outline" style="margin-top: 10px; opacity: 0.5;" disabled>Comenzar</button>
+            </div>
+          </div>
+        `;
+        
+        // Actualizar el contenido del examen
+        document.getElementById('examContent').innerHTML = `
+          <div class="exam-section">
+            <h3>Examen generado a partir de tu material</h3>
+            <p>Este examen consta de 5 preguntas basadas en el material que subiste. Una vez que completes el plan de estudio, podrás realizar este examen para evaluar tu conocimiento.</p>
+            <div class="stats-container" style="margin: 20px 0;">
+              <div class="stat-card">
+                <i class="fas fa-question"></i>
+                <div class="value">5</div>
+                <div class="label">Preguntas</div>
+              </div>
+              <div class="stat-card">
+                <i class="fas fa-clock"></i>
+                <div class="value">15 min</div>
+                <div class="label">Duración</div>
+              </div>
+              <div class="stat-card">
+                <i class="fas fa-check-circle"></i>
+                <div class="value">70%</div>
+                <div class="label">Para aprobar</div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        document.getElementById('examActions').style.display = 'block';
+        
+        // Actualizar el resumen
+        document.getElementById('summaryContent').innerHTML = `
+          <p>${result}</p>
+          <button class="btn" style="margin-top: 15px;" onclick="switchTab('chat')">
+            <i class="fas fa-comments"></i> Preguntar sobre este tema
+          </button>
+        `;
+        
+        addChatMessage("bot", "¡He analizado tu material y generado un plan de estudio personalizado! Revisa las pestañas 📚 y 🎯. ¿En qué aspecto del material te gustaría profundizar primero?");
+        
+      } catch (error) {
+        console.error("Error generating content:", error);
+        addChatMessage("bot", "Lo siento, hubo un error al procesar tu material. Por favor, intenta con archivos más pequeños o con formato diferente.");
+      }
+    }
+
+    // Llamar a la API de Gemini
+    async function callGemini(userPrompt, useSystemPrompt = false) {
+      let fullPrompt = userPrompt;
+      
+      if (useSystemPrompt) {
+        fullPrompt = SYSTEM_PROMPT + "\n\nPregunta del estudiante: " + userPrompt;
+      }
+      
+      try {
+        const response = await fetch(
+          "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + GEMINI_API_KEY,
+          {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ 
+              contents: [{ 
+                parts: [{ text: fullPrompt }] 
+              }],
+              generationConfig: {
+                temperature: 0.7,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 1024,
+              }
+            })
+          }
+        );
+        
+        const data = await response.json();
+        if (data.candidates?.length > 0) {
+          return data.candidates[0].content.parts[0].text;
+        } else {
+          return "No pude generar una respuesta educativa en este momento. ¿Podrías reformular tu pregunta?";
+        }
+      } catch (e) {
+        console.error(e);
+        return "Error de conexión. Por favor, verifica tu conexión a internet e intenta nuevamente.";
+      }
+    }
+
+    // Cambiar pestaña
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelector(`button[onclick="switchTab('${tabName}')"]`).classList.add('active');
+      document.getElementById(tabName).classList.add('active');
+      
+      // Ocultar notificación al hacer clic
+      if (tabName === 'study') {
+        document.getElementById('studyNotification').style.display = 'none';
+      } else if (tabName === 'exam') {
+        document.getElementById('examNotification').style.display = 'none';
+      } else if (tabName === 'upload') {
+        document.getElementById('uploadNotification').style.display = 'none';
+      } else if (tabName === 'chat') {
+        document.getElementById('chatNotification').style.display = 'none';
+      }
+    }
+
+    // Manejar chat
+    function handleChatEnter(e) {
+      if (e.key === "Enter") sendMessage();
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const msg = input.value.trim();
+      if (!msg) return;
+      
+      addChatMessage("user", msg);
+      input.value = "";
+      document.getElementById('sendMessageBtn').disabled = true;
+      
+      // Actualizar estadísticas
+      appState.userStats.questionsAsked++;
+      
+      // Otorgar logro por primera pregunta
+      if (appState.userStats.questionsAsked === 1) {
+        grantAchievement("first_question");
+      }
+      
+      updateStatsDisplay();
+      
+      const typing = document.createElement("div");
+      typing.className = "message bot";
+      typing.innerHTML = `<div class="loading"></div> Pensando...`;
+      typing.id = "typing";
+      document.getElementById("chatArea").appendChild(typing);
+      
+      try {
+        const response = await callGemini(msg, true);
+        typing.remove();
+        addChatMessage("bot", response);
+        
+        // Otorgar XP por interacción
+        addXP(5);
+      } catch (error) {
+        typing.remove();
+        addChatMessage("bot", "Lo siento, hubo un error al procesar tu pregunta. Por favor, intenta de nuevo.");
+      }
+      
+      document.getElementById('sendMessageBtn').disabled = false;
+    }
+
+    function addChatMessage(sender, text) {
+      const chatArea = document.getElementById("chatArea");
+      const div = document.createElement("div");
+      div.className = `message ${sender}`;
+      
+      const now = new Date();
+      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      div.innerHTML = `${text} <span class="time">${time}</span>`;
+      chatArea.appendChild(div);
+      chatArea.scrollTop = chatArea.scrollHeight;
+      
+      // Guardar en historial
+      appState.chatHistory.push({ sender, text, time });
+      
+      // Mostrar notificación si no está en la pestaña de chat
+      if (!document.getElementById('chat').classList.contains('active') && sender === 'bot') {
+        document.getElementById('chatNotification').style.display = 'flex';
+      }
+    }
+
+    // Limpiar chat
+    function clearChat() {
+      if (confirm("¿Estás seguro de que quieres limpiar el historial de chat?")) {
+        document.getElementById("chatArea").innerHTML = `
+          <div class="message bot">
+            ¡Hola! Soy EduBot, tu tutor personal. El historial de chat ha sido limpiado. ¿En qué puedo ayudarte hoy?
+            <span class="time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+        `;
+        appState.chatHistory = [];
+      }
+    }
+
+    // Sugerir pregunta
+    function suggestQuestion(type) {
+      const questions = {
+        explicame: "¿Podrías explicarme el concepto principal de este material?",
+        ejemplo: "¿Podrías darme un ejemplo práctico de este tema?",
+        resumen: "¿Podrías hacer un resumen de los puntos clave?"
+      };
+      
+      document.getElementById('chatInput').value = questions[type];
+      document.getElementById('chatInput').focus();
+    }
+
+    // Iniciar plan de estudio
+    function startStudyPlan() {
+      switchTab('study');
+      alert('¡Plan de estudio iniciado! Comienza con la Fase 1: Introducción.');
+    }
+
+    // Generar plan de estudio
+    function generateStudyPlan() {
+      if (confirm("¿Generar un nuevo plan de estudio? Esto reiniciará tu progreso actual.")) {
+        document.getElementById('studyContent').innerHTML = `<p class="placeholder-text">Generando nuevo plan de estudio...</p>`;
+        setTimeout(() => {
+          generateLearningContent();
+        }, 1500);
+      }
+    }
+
+    // Iniciar fase de estudio
+    function startPhase(phaseNumber) {
+      // Marcar fase como activa
+      const phaseElements = document.querySelectorAll('.study-card');
+      phaseElements.forEach((el, idx) => {
+        const badge = el.querySelector('.badge');
+        if (idx + 1 === phaseNumber) {
+          badge.className = 'badge badge-active';
+          badge.textContent = 'Activa';
+        } else if (idx + 1 < phaseNumber) {
+          badge.className = 'badge badge-completed';
+          badge.textContent = 'Completada';
+        }
+      });
+      
+      // Simular contenido de la fase
+      const phaseTitles = [
+        "Introducción a los conceptos básicos",
+        "Comprensión de los temas principales",
+        "Aplicación práctica del conocimiento",
+        "Evaluación de lo aprendido",
+        "Desafíos de maestría"
+      ];
+      
+      const phaseContent = `
+        <div class="study-phase-content">
+          <h3>Fase ${phaseNumber}: ${phaseTitles[phaseNumber-1]}</h3>
+          <div class="progress-bar">
+            <div class="progress-fill" id="phaseProgress" style="width: 0%"></div>
+            <div class="progress-text">Progreso: 0%</div>
+          </div>
+          
+          <div class="phase-materials">
+            <h4><i class="fas fa-book"></i> Materiales de estudio</h4>
+            <ul>
+              <li>Documento principal: ${appState.files[0]?.name || 'Material de estudio'}</li>
+              <li>Resumen generado por EduBot</li>
+              <li>Ejemplos prácticos</li>
+            </ul>
+          </div>
+          
+          <div class="phase-exercises">
+            <h4><i class="fas fa-pencil-alt"></i> Ejercicios</h4>
+            <div class="quiz-question">
+              <p>¿Cuál es el concepto principal que has aprendido en esta fase?</p>
+              <div class="quiz-options">
+                <div class="quiz-option">
+                  <input type="radio" name="phase${phaseNumber}Question" id="option1">
+                  <label for="option1">Opción 1</label>
+                </div>
+                <div class="quiz-option">
+                  <input type="radio" name="phase${phaseNumber}Question" id="option2">
+                  <label for="option2">Opción 2</label>
+                </div>
+                <div class="quiz-option">
+                  <input type="radio" name="phase${phaseNumber}Question" id="option3">
+                  <label for="option3">Opción 3</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 20px;">
+            <button class="btn btn-success" onclick="completePhase(${phaseNumber})">
+              <i class="fas fa-check"></i> Completar fase
+            </button>
+            <button class="btn btn-outline" onclick="askPhaseQuestion(${phaseNumber})">
+              <i class="fas fa-question"></i> Preguntar duda
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('studyContent').innerHTML = phaseContent;
+      
+      // Simular progreso de la fase
+      simulatePhaseProgress(phaseNumber);
+    }
+
+    // Simular progreso de la fase
+    function simulatePhaseProgress(phaseNumber) {
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 5;
+        document.getElementById('phaseProgress').style.width = progress + '%';
+        document.querySelector('.progress-text').textContent = `Progreso: ${progress}%`;
+        
+        if (progress >= 100) {
+          clearInterval(interval);
+        }
+      }, 300);
+    }
+
+    // Completar fase
+    function completePhase(phaseNumber) {
+      // Actualizar interfaz
+      const phaseElements = document.querySelectorAll('.study-card');
+      const currentPhaseElement = phaseElements[phaseNumber-1];
+      
+      currentPhaseElement.querySelector('.badge').className = 'badge badge-completed';
+      currentPhaseElement.querySelector('.badge').textContent = 'Completada';
+      currentPhaseElement.querySelector('.progress-inner').style.width = '100%';
+      
+      // Habilitar siguiente fase si existe
+      if (phaseNumber < 5) {
+        const nextPhaseElement = phaseElements[phaseNumber];
+        nextPhaseElement.querySelector('button').disabled = false;
+        nextPhaseElement.querySelector('button').style.opacity = '1';
+      }
+      
+      // Actualizar estadísticas
+      appState.userStats.exercisesCompleted++;
+      document.getElementById('completedPhases').textContent = `${phaseNumber}/5`;
+      
+      // Otorgar XP
+      addXP(20);
+      
+      // Mostrar mensaje de éxito
+      alert(`¡Fase ${phaseNumber} completada con éxito! Has ganado 20 XP.`);
+      
+      // Volver a la vista general del plan de estudio
+      document.getElementById('studyContent').innerHTML = `
+        <div class="study-plan">
+          <div class="study-card">
+            <span class="badge badge-completed">Completada</span>
+            <h3>Fase 1: Introducción</h3>
+            <p>Familiarízate con los conceptos básicos del tema.</p>
+            <div class="progress">
+              <div class="progress-inner" style="width: 100%"></div>
+            </div>
+            <button class="btn btn-outline" style="margin-top: 10px;" onclick="startPhase(1)">Revisar</button>
+          </div>
+          <div class="study-card">
+            <span class="badge ${phaseNumber >= 2 ? 'badge-completed' : 'badge-pending'}">${phaseNumber >= 2 ? 'Completada' : 'Pendiente'}</span>
+            <h3>Fase 2: Comprensión</h3>
+            <p>Profundiza en los conceptos principales.</p>
+            <div class="progress">
+              <div class="progress-inner" style="width: ${phaseNumber >= 2 ? '100' : '0'}%"></div>
+            </div>
+            <button class="btn btn-outline" style="margin-top: 10px;" ${phaseNumber >= 2 ? '' : 'disabled'} onclick="startPhase(2)">${phaseNumber >= 2 ? 'Revisar' : 'Comenzar'}</button>
+          </div>
+          <div class="study-card">
+            <span class="badge ${phaseNumber >= 3 ? 'badge-completed' : 'badge-pending'}">${phaseNumber >= 3 ? 'Completada' : 'Pendiente'}</span>
+            <h3>Fase 3: Aplicación</h3>
+            <p>Aplica lo aprendido en ejercicios prácticos.</p>
+            <div class="progress">
+              <div class="progress-inner" style="width: ${phaseNumber >= 3 ? '100' : '0'}%"></div>
+            </div>
+            <button class="btn btn-outline" style="margin-top: 10px;" ${phaseNumber >= 3 ? '' : 'disabled'} onclick="startPhase(3)">${phaseNumber >= 3 ? 'Revisar' : 'Comenzar'}</button>
+          </div>
+          <div class="study-card">
+            <span class="badge ${phaseNumber >= 4 ? 'badge-completed' : 'badge-pending'}">${phaseNumber >= 4 ? 'Completada' : 'Pendiente'}</span>
+            <h3>Fase 4: Evaluación</h3>
+            <p>Evalúa tu conocimiento con un examen práctico.</p>
+            <div class="progress">
+              <div class="progress-inner" style="width: ${phaseNumber >= 4 ? '100' : '0'}%"></div>
+            </div>
+            <button class="btn btn-outline" style="margin-top: 10px;" ${phaseNumber >= 4 ? '' : 'disabled'} onclick="startPhase(4)">${phaseNumber >= 4 ? 'Revisar' : 'Comenzar'}</button>
+          </div>
+          <div class="study-card">
+            <span class="badge ${phaseNumber >= 5 ? 'badge-completed' : 'badge-pending'}">${phaseNumber >= 5 ? 'Completada' : 'Pendiente'}</span>
+            <h3>Fase 5: Maestría</h3>
+            <p>Convierte el conocimiento en maestría con retos avanzados.</p>
+            <div class="progress">
+              <div class="progress-inner" style="width: ${phaseNumber >= 5 ? '100' : '0'}%"></div>
+            </div>
+            <button class="btn btn-outline" style="margin-top: 10px;" ${phaseNumber >= 5 ? '' : 'disabled'} onclick="startPhase(5)">${phaseNumber >= 5 ? 'Revisar' : 'Comenzar'}</button>
+          </div>
+        </div>
+      `;
+      
+      // Si se completaron todas las fases, otorgar logro
+      if (phaseNumber === 5) {
+        grantAchievement("study_plan");
+        document.getElementById('examActions').style.display = 'block';
+      }
+      
+      updateStatsDisplay();
+    }
+
+    // Preguntar duda sobre la fase
+    function askPhaseQuestion(phaseNumber) {
+      switchTab('chat');
+      document.getElementById('chatInput').value = `Tengo una duda sobre la fase ${phaseNumber} de mi plan de estudio: `;
+      document.getElementById('chatInput').focus();
+    }
+
+    // Iniciar examen
+    function startExam() {
+      switchTab('exam');
+      
+      // Generar preguntas de ejemplo
+      const examQuestions = [
+        {
+          question: "¿Cuál es el concepto principal del material estudiado?",
+          options: ["Opción A", "Opción B", "Opción C", "Opción D"],
+          correct: 0
+        },
+        {
+          question: "Según el material, ¿qué característica es la más importante?",
+          options: ["Característica 1", "Característica 2", "Característica 3", "Característica 4"],
+          correct: 1
+        },
+        {
+          question: "¿Qué ejemplo se menciona en el material?",
+          options: ["Ejemplo X", "Ejemplo Y", "Ejemplo Z", "Ninguno de los anteriores"],
+          correct: 2
+        },
+        {
+          question: "¿Cuál es la conclusión principal?",
+          options: ["Conclusión A", "Conclusión B", "Conclusión C", "Conclusión D"],
+          correct: 3
+        },
+        {
+          question: "¿Qué recomendación se hace para aplicar este conocimiento?",
+          options: ["Recomendación 1", "Recomendación 2", "Recomendación 3", "Todas las anteriores"],
+          correct: 3
+        }
+      ];
+      
+      let examHTML = `
+        <div class="exam-instructions">
+          <h3>Examen sobre: ${appState.currentTopic || 'Tu material de estudio'}</h3>
+          <p>Responde las siguientes preguntas. Tienes 15 minutos para completar el examen.</p>
+          <div class="timer" style="text-align: center; margin: 15px 0; font-size: 1.2em;">
+            <i class="fas fa-clock"></i> Tiempo restante: <span id="examTimer">15:00</span>
+          </div>
+        </div>
+      `;
+      
+      examQuestions.forEach((q, index) => {
+        examHTML += `
+          <div class="quiz-question">
+            <h4>Pregunta ${index + 1}</h4>
+            <p>${q.question}</p>
+            <div class="quiz-options">
+        `;
+        
+        q.options.forEach((option, optIndex) => {
+          examHTML += `
+            <div class="quiz-option">
+              <input type="radio" name="question${index}" id="q${index}opt${optIndex}" value="${optIndex}">
+              <label for="q${index}opt${optIndex}">${option}</label>
+            </div>
+          `;
+        });
+        
+        examHTML += `
+            </div>
+          </div>
+        `;
+      });
+      
+      examHTML += `
+        <div style="text-align: center; margin-top: 30px;">
+          <button class="btn btn-success" onclick="finishExam()">
+            <i class="fas fa-check-circle"></i> Finalizar examen
+          </button>
+        </div>
+      `;
+      
+      document.getElementById('examContent').innerHTML = examHTML;
+      document.getElementById('examActions').style.display = 'none';
+      
+      // Iniciar temporizador
+      startExamTimer(15 * 60); // 15 minutos en segundos
+    }
+
+    // Temporizador del examen
+    function startExamTimer(duration) {
+      let timer = duration;
+      const interval = setInterval(() => {
+        const minutes = Math.floor(timer / 60);
+        const seconds = timer % 60;
+        
+        document.getElementById('examTimer').textContent = 
+          `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (--timer < 0) {
+          clearInterval(interval);
+          finishExam();
+        }
+      }, 1000);
+      
+      window.examTimerInterval = interval;
+    }
+
+    // Finalizar examen
+    function finishExam() {
+      clearInterval(window.examTimerInterval);
+      
+      // Calificar examen (simulado)
+      const score = Math.floor(Math.random() * 41) + 60; // Entre 60 y 100
+      
+      // Mostrar resultados
+      document.getElementById('examContent').style.display = 'none';
+      document.getElementById('examResults').style.display = 'block';
+      document.getElementById('examScore').textContent = `${score}%`;
+      
+      // Actualizar estadísticas
+      appState.userStats.averageScore = (appState.userStats.averageScore * appState.userStats.exercisesCompleted + score) / (appState.userStats.exercisesCompleted + 1);
+      appState.userStats.exercisesCompleted++;
+      
+      // Otorgar XP según puntuación
+      const xpEarned = Math.floor(score / 10) * 10;
+      addXP(xpEarned);
+      
+      // Otorgar logro si aprobó
+      if (score >= 70) {
+        grantAchievement("exam_passed");
+      }
+      
+      updateStatsDisplay();
+    }
+
+    // Revisar examen
+    function reviewExam() {
+      document.getElementById('examResults').style.display = 'none';
+      document.getElementById('examContent').style.display = 'block';
+      
+      // Cambiar botón de finalizar por volver a resultados
+      const finishButton = document.querySelector('.btn-success');
+      finishButton.innerHTML = '<i class="fas fa-arrow-left"></i> Volver a resultados';
+      finishButton.onclick = () => {
+        document.getElementById('examContent').style.display = 'none';
+        document.getElementById('examResults').style.display = 'block';
+      };
+    }
+
+    // Reintentar examen
+    function retryExam() {
+      document.getElementById('examResults').style.display = 'none';
+      startExam();
+    }
+
+    // Generar más preguntas
+    function generateMoreQuestions() {
+      alert('Generando más preguntas... Esta funcionalidad se conectará con el backend.');
+    }
+
+    // Agregar XP al usuario
+    function addXP(amount) {
+      appState.userStats.xp += amount;
+      
+      // Verificar si subió de nivel
+      const currentLevel = LEVELS.findIndex(level => level.xpRequired > appState.userStats.xp);
+      if (currentLevel !== -1 && currentLevel !== appState.userStats.currentLevel) {
+        appState.userStats.currentLevel = currentLevel;
+        alert(`¡Felicidades! Has alcanzado el nivel ${currentLevel}: ${LEVELS[currentLevel-1].title}`);
+      }
+      
+      updateUserProfile();
+      updateStatsDisplay();
+    }
+
+    // Otorgar logro
+    function grantAchievement(achievementId) {
+      const achievement = ACHIEVEMENTS.find(a => a.id === achievementId);
+      if (achievement && !appState.userStats.achievements.includes(achievementId)) {
+        appState.userStats.achievements.push(achievementId);
+        addXP(achievement.xp);
+        
+        // Mostrar notificación de logro
+        alert(`¡Logro desbloqueado: ${achievement.name}! +${achievement.xp} XP`);
+        
+        updateStatsDisplay();
+      }
+    }
+
+    // Cargar progreso del usuario
+    function loadUserProgress() {
+      // Simular carga de datos guardados
+      const savedProgress = localStorage.getItem('edubot_progress');
+      if (savedProgress) {
+        appState.userStats = { ...appState.userStats, ...JSON.parse(savedProgress) };
+        updateStatsDisplay();
+        updateUserProfile();
+      }
+    }
+
+    // Guardar progreso del usuario
+    function saveUserProgress() {
+      localStorage.setItem('edubot_progress', JSON.stringify(appState.userStats));
+    }
+
+    // Actualizar estadísticas en la UI
+    function updateStatsDisplay() {
+      document.getElementById('totalMaterials').textContent = appState.userStats.materialsUploaded;
+      document.getElementById('totalQuestions').textContent = appState.userStats.questionsAsked;
+      document.getElementById('totalExercises').textContent = appState.userStats.exercisesCompleted;
+      document.getElementById('totalScore').textContent = Math.round(appState.userStats.averageScore) + '%';
+      document.getElementById('studyXP').textContent = appState.userStats.xp + ' XP';
+      
+      document.getElementById('completedPhases').textContent = `0/5`;
+      document.getElementById('estimatedTime').textContent = `3h 30m`;
+      document.getElementById('currentLevel').textContent = LEVELS[appState.userStats.currentLevel - 1]?.title || 'Principiante';
+      
+      // Actualizar barra de progreso de nivel
+      const currentLevel = LEVELS[appState.userStats.currentLevel - 1];
+      const nextLevel = LEVELS[appState.userStats.currentLevel];
+      
+      if (currentLevel && nextLevel) {
+        const xpInCurrentLevel = appState.userStats.xp - currentLevel.xpRequired;
+        const xpNeededForNextLevel = nextLevel.xpRequired - currentLevel.xpRequired;
+        const progressPercentage = (xpInCurrentLevel / xpNeededForNextLevel) * 100;
+        
+        document.getElementById('levelProgressFill').style.width = `${progressPercentage}%`;
+        document.getElementById('levelProgressText').textContent = 
+          `Nivel ${appState.userStats.currentLevel} - ${Math.round(progressPercentage)}% completado`;
+      }
+      
+      // Actualizar logros
+      const achievementsContainer = document.getElementById('achievementsContainer');
+      achievementsContainer.innerHTML = '';
+      
+      ACHIEVEMENTS.forEach(achievement => {
+        const isUnlocked = appState.userStats.achievements.includes(achievement.id);
+        
+        achievementsContainer.innerHTML += `
+          <div style="background: ${isUnlocked ? '#d4edda' : '#f8f9fa'}; padding: 10px; border-radius: 10px; text-align: center; width: 100px;">
+            <i class="fas fa-${achievement.icon} fa-2x" style="color: ${isUnlocked ? '#28a745' : '#6c757d'};"></i>
+            <div style="font-size: 12px; margin-top: 5px;">${achievement.name}</div>
+            ${isUnlocked ? `<div style="font-size: 10px; color: #28a745;">+${achievement.xp} XP</div>` : ''}
+          </div>
+        `;
+      });
+      
+      saveUserProgress();
+    }
+
+    // Modal functions
+    function showModal(modalId) {
+      document.getElementById(modalId).style.display = 'flex';
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+  </script>
+</body>
+</html>
