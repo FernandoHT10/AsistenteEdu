@@ -16,6 +16,9 @@ const registerRoute = require('./api/auth/register');
 const userRoute = require('./api/user');
 const statsRoute = require('./api/stats/update');
 const achievementsRoute = require('./api/achievements/unlock');
+const tasksRoute = require('./api/tasks/tasks');
+const examsRoute = require('./api/exams/exams');
+const materialsRoute = require('./api/materials/materials');
 
 // Rutas de API
 app.post('/api/auth/login', loginRoute);
@@ -23,6 +26,15 @@ app.post('/api/auth/register', registerRoute);
 app.get('/api/user', userRoute);
 app.post('/api/stats/update', statsRoute);
 app.post('/api/achievements/unlock', achievementsRoute);
+
+// Rutas de tareas
+app.use('/api/tasks', tasksRoute);
+
+// Rutas de exámenes
+app.use('/api/exams', examsRoute);
+
+// Rutas de materiales
+app.use('/api/materials', materialsRoute);
 
 // Servir la aplicación principal
 app.get('*', (req, res) => {
